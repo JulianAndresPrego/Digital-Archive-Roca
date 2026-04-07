@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Miguel Ángel Roca — Archivo Digital</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400;500&family=Crimson+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <!-- Leaflet Maps -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+
+  <!-- Estilos propios -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div id="app">
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div class="logo">M·A·R — Archivo Digital</div>
+  <nav>
+    <button onclick="showPage('home')"    id="btn-home"    class="active">Inicio</button>
+    <button onclick="showPage('dash')"    id="btn-dash">Dashboard</button>
+    <button onclick="showPage('world')"   id="btn-world">Mapa Mundial</button>
+    <button onclick="showPage('cordoba')" id="btn-cordoba">Córdoba</button>
+  </nav>
+  <div class="meta">FraMMET · PNRR<br>Univ. Salerno 2026</div>
+</div>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="grid-bg"></div>
+  <div class="big-r">R</div>
+  <div class="hc">
+    <div class="eyebrow">Archivo Gráfico Digital · Museo Virtual · FraMMET</div>
+    <h1 class="ht">Miguel <em>Ángel</em><br>Roca</h1>
+    <p class="hsub">Análisis y visualización del patrimonio arquitectónico</p>
+    <div class="hstats">
+      <div><span class="stn">120</span><span class="stl">Proyectos</span></div>
+      <div><span class="stn">96</span><span class="stl">Realizados</span></div>
+      <div><span class="stn">9</span><span class="stl">Países</span></div>
+      <div><span class="stn">7</span><span class="stl">Décadas</span></div>
+    </div>
+    <div class="hnav">
+      <button class="p" onclick="showPage('dash')">→ Dashboard Analítico</button>
+      <button onclick="showPage('world')">Mapa Mundial</button>
+      <button onclick="showPage('cordoba')">Mapa Córdoba</button>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="page" id="page-dash">
+
+  <!-- FILTER BAR -->
+  <div id="filter-bar">
+    <span id="filter-label">Filtrado por</span>
+    <span id="filter-val"></span>
+    <span id="filter-count"></span>
+    <button id="filter-clear" onclick="clearFilter()">✕ Limpiar filtro</button>
+  </div>
+
+  <!-- ROW 1: tipología · país · tangibles -->
+  <div class="dgrid top">
+    <div class="cc interactive has-src" id="card-dest">
+      <div class="ct">Total Proyectos por Tipología <span class="ct-hint">clic para filtrar</span></div>
+      <div class="cw" style="min-height:220px"><canvas id="ch-dest"></canvas></div>
+    </div>
+    <div class="cc interactive" id="card-pais">
+      <div class="ct">Por País <span class="ct-hint">clic para filtrar</span></div>
+      <div class="cw" style="min-height:220px"><canvas id="ch-pais"></canvas></div>
+    </div>
+    <div class="cc interactive" id="card-tang">
+      <div class="ct">Realizados vs. No ejecutados <span class="ct-hint">clic para filtrar</span></div>
+      <div class="cw" style="min-height:220px"><canvas id="ch-tang"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ROW 2: décadas -->
+  <div class="dgrid mid">
+    <div class="cc interactive" id="card-dec">
+      <div class="ct">Obras Proyectadas vs. Realizadas por Década <span class="ct-hint">clic para filtrar por década</span></div>
+      <div class="cw" style="min-height:130px"><canvas id="ch-dec"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ROW 3: heatmap -->
+  <div class="dgrid bot">
+    <div class="cc" id="card-hm" style="padding-bottom:16px">
+      <div class="ct">Destino de los Proyectos por Década — Matriz de Intensidad</div>
+      <div class="hmwrap" style="min-height:170px"><table class="hmt" id="hm"></table></div>
+    </div>
+  </div>
+
+</div><!-- /page-dash -->
+
+<!-- MAPA MUNDIAL -->
+<div class="page" id="page-world">
+  <div class="mapwrap"><div id="map-world" class="lmap"></div></div>
+  <div class="sp">
+    <div class="sph"><div class="sphl">Ficha del Proyecto</div><div class="spht">Mapa Mundial · M.A.R.</div></div>
+    <div class="spb" id="spb-world">
+      <div class="sempty" id="sem-world"><div class="seico">◎</div><div class="setxt">Seleccioná un proyecto en el mapa para ver su ficha</div></div>
+      <div id="scard-world"></div>
+    </div>
+    <div class="slnks">
+      <a class="slnk off" id="lnk-world-360" target="_blank" rel="noopener">⟳ Link 360°</a>
+      <a class="slnk off" id="lnk-world-info" target="_blank" rel="noopener">↗ Más Info</a>
+    </div>
+  </div>
+</div>
+
+<!-- CÓRDOBA -->
+<div class="page" id="page-cordoba">
+  <div class="mapwrap"><div id="map-cba" class="lmap"></div></div>
+  <div class="sp">
+    <div class="sph"><div class="sphl">Ficha del Proyecto</div><div class="spht">Proyectos en Córdoba</div></div>
+    <div class="spb" id="spb-cba">
+      <div class="sempty" id="sem-cba"><div class="seico">◎</div><div class="setxt">Seleccioná un proyecto en el mapa para ver su ficha</div></div>
+      <div id="scard-cba"></div>
+    </div>
+    <div class="slnks">
+      <a class="slnk off" id="lnk-cba-360" target="_blank" rel="noopener">⟳ Link 360°</a>
+      <a class="slnk off" id="lnk-cba-info" target="_blank" rel="noopener">↗ Más Info</a>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Dataset (debe cargarse ANTES que app.js) -->
+  <script src="js/data.js"></script>
+
+  <!-- Lógica de la aplicación -->
+  <script src="js/app.js"></script>
+
+</body>
+</html>
