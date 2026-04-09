@@ -60,16 +60,16 @@
 
   <!-- FILTER BAR -->
   <div id="filter-bar">
-    <span id="filter-label">Filtrado por</span>
-    <span id="filter-val"></span>
+    <span id="filter-label">Filtros activos</span>
+    <div id="filter-chips"></div>
     <span id="filter-count"></span>
-    <button id="filter-clear" onclick="clearFilter()">✕ Limpiar filtro</button>
+    <button id="filter-clear" onclick="clearAllFilters()">✕ Limpiar todo</button>
   </div>
 
   <!-- ROW 1: tipología · país · tangibles -->
   <div class="dgrid top">
     <div class="cc interactive has-src" id="card-dest">
-      <div class="ct">Total Proyectos por Tipología <span class="ct-hint">clic para filtrar</span></div>
+      <div class="ct">Top 10 Tipologías por Cantidad <span class="ct-hint">clic para filtrar</span></div>
       <div class="cw" style="min-height:220px"><canvas id="ch-dest"></canvas></div>
     </div>
     <div class="cc interactive" id="card-pais">
@@ -93,8 +93,18 @@
   <!-- ROW 3: heatmap -->
   <div class="dgrid bot">
     <div class="cc" id="card-hm" style="padding-bottom:16px">
-      <div class="ct">Destino de los Proyectos por Década — Matriz de Intensidad</div>
+      <div class="ct">Top 10 Tipologías por Década — Matriz de Intensidad</div>
       <div class="hmwrap" style="min-height:170px"><table class="hmt" id="hm"></table></div>
+    </div>
+  </div>
+
+  <!-- ROW 4: sankey país × tipología -->
+  <div class="dgrid bot">
+    <div class="cc" id="card-sankey" style="padding-bottom:14px">
+      <div class="ct">Relación País × Tipología — Flujo de Proyectos
+        <span class="ct-hint">muestra cómo se distribuyen las tipologías por país</span>
+      </div>
+      <div class="cw" style="min-height:220px"><canvas id="ch-sankey"></canvas></div>
     </div>
   </div>
 
@@ -102,7 +112,23 @@
 
 <!-- MAPA MUNDIAL -->
 <div class="page" id="page-world">
-  <div class="mapwrap"><div id="map-world" class="lmap"></div></div>
+  <div class="mapwrap" style="position:relative">
+    <div id="map-world" class="lmap"></div>
+    <div class="layer-switcher" id="ls-world">
+      <button class="ls-btn active" onclick="setLayer('world','voyager')" id="ls-world-voyager">
+        <span class="ls-dot" style="background:#F4821A"></span>Estándar
+      </button>
+      <button class="ls-btn" onclick="setLayer('world','dark')" id="ls-world-dark">
+        <span class="ls-dot" style="background:#334"></span>Oscuro
+      </button>
+      <button class="ls-btn" onclick="setLayer('world','light')" id="ls-world-light">
+        <span class="ls-dot" style="background:#ddd"></span>Claro
+      </button>
+      <button class="ls-btn" onclick="setLayer('world','satellite')" id="ls-world-satellite">
+        <span class="ls-dot" style="background:#4a8"></span>Satélite
+      </button>
+    </div>
+  </div>
   <div class="sp">
     <div class="sph"><div class="sphl">Ficha del Proyecto</div><div class="spht">Mapa Mundial · M.A.R.</div></div>
     <div class="spb" id="spb-world">
@@ -118,7 +144,23 @@
 
 <!-- CÓRDOBA -->
 <div class="page" id="page-cordoba">
-  <div class="mapwrap"><div id="map-cba" class="lmap"></div></div>
+  <div class="mapwrap" style="position:relative">
+    <div id="map-cba" class="lmap"></div>
+    <div class="layer-switcher" id="ls-cba">
+      <button class="ls-btn active" onclick="setLayer('cba','satellite')" id="ls-cba-satellite">
+        <span class="ls-dot" style="background:#4a8"></span>Satélite
+      </button>
+      <button class="ls-btn" onclick="setLayer('cba','voyager')" id="ls-cba-voyager">
+        <span class="ls-dot" style="background:#F4821A"></span>Estándar
+      </button>
+      <button class="ls-btn" onclick="setLayer('cba','dark')" id="ls-cba-dark">
+        <span class="ls-dot" style="background:#334"></span>Oscuro
+      </button>
+      <button class="ls-btn" onclick="setLayer('cba','light')" id="ls-cba-light">
+        <span class="ls-dot" style="background:#ddd"></span>Claro
+      </button>
+    </div>
+  </div>
   <div class="sp">
     <div class="sph"><div class="sphl">Ficha del Proyecto</div><div class="spht">Proyectos en Córdoba</div></div>
     <div class="spb" id="spb-cba">
@@ -138,8 +180,9 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
-  <!-- Chart.js -->
+  <!-- Chart.js + plugin Sankey -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-sankey@0.12.1/dist/chartjs-chart-sankey.min.js"></script>
 
   <!-- Dataset (debe cargarse ANTES que app.js) -->
   <script src="js/data.js"></script>

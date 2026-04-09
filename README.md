@@ -1,21 +1,8 @@
 # Miguel Ángel Roca — Archivo Digital
 
-Dashboard interactivo de análisis y visualización del patrimonio arquitectónico de **Miguel Ángel Roca**, desarrollado en el marco del proyecto **FraMMET** (TNE23-00074 — Fragility, Marginality, Mobility, Energy Transition), financiado por el MUR a través del PNRR, con sede en la Universidad de Salerno.
+Dashboard interactivo de análisis y visualización del patrimonio arquitectónico de **Miguel Ángel Roca**, desarrollado en el marco del proyecto **FraMMET** (TNE23-00074), financiado por el MUR a través del PNRR, con sede en la Universidad de Salerno.
 
-> Julián Andrés Prego · Responsable: Prof. Fernando Fraternali · 2026
-
----
-
-## Vista previa
-
-El dashboard incluye cuatro vistas principales:
-
-| Vista | Descripción |
-|-------|-------------|
-| **Inicio** | Portada con estadísticas globales del corpus |
-| **Dashboard** | Análisis con 5 gráficos interactivos y filtrado cruzado |
-| **Mapa Mundial** | 120 proyectos georeferenciados (tiles Voyager + clustering) |
-| **Córdoba** | Zoom urbano con imagen satelital ESRI |
+> Julián Andrés Prego · Prof. Fernando Fraternali · 2026
 
 ---
 
@@ -24,98 +11,123 @@ El dashboard incluye cuatro vistas principales:
 ```
 roca-archivo-digital/
 │
-├── index.html              ← Punto de entrada (abrir en navegador)
+├── index.html                  ← Punto de entrada
 │
 ├── css/
-│   └── styles.css          ← Todos los estilos (tema oscuro + paleta viva)
+│   └── styles.css              ← Estilos (tema oscuro + paleta viva)
 │
 ├── js/
-│   ├── data.js             ← Dataset de los 120 proyectos (generado)
-│   └── app.js              ← Lógica: gráficos, mapas, filtros, scheda
+│   ├── data.js                 ← Dataset 120 proyectos (generado)
+│   └── app.js                  ← Toda la lógica comentada por sección
 │
 ├── data/
-│   ├── Roca_DB.xlsx        ← Base de datos principal (fuente de verdad)
-│   ├── img_Roca_DB.xlsx    ← URLs de imágenes por Proyecto_Id
-│   └── projects.json       ← Export JSON (generado por export_data.py)
+│   ├── Roca_DB.xlsx            ← Base de datos principal ★ fuente de verdad
+│   ├── img_Roca_DB.xlsx        ← URLs de imágenes por Proyecto_Id
+│   └── projects.json           ← Export JSON (generado)
 │
 ├── scripts/
-│   └── export_data.py      ← Script para regenerar data.js desde los Excel
+│   └── export_data.py          ← Regenera data.js desde los Excel
 │
-└── assets/                 ← Recursos estáticos (imágenes locales, si aplica)
+└── assets/                     ← Recursos estáticos locales (favicon, etc.)
 ```
 
 ---
 
 ## Cómo usar
 
-### Opción A — Abrir directamente (sin servidor)
+### Abrir localmente (recomendado)
 
 ```bash
-# Simplemente abrir index.html en el navegador
-open index.html          # macOS
-xdg-open index.html      # Linux
-start index.html         # Windows
-```
-
-> ⚠️ Algunos navegadores bloquean recursos locales con `file://`. Si los mapas no cargan, usar la Opción B.
-
-### Opción B — Servidor local (recomendado)
-
-```bash
-# Con Python (sin instalación adicional)
+# Con Python — desde la raíz del proyecto
 python3 -m http.server 8080
-
-# Luego abrir en el navegador:
-# http://localhost:8080
+# Abrir http://localhost:8080
 ```
 
-### Opción C — GitHub Pages
+> Abrir `index.html` directo con `file://` puede bloquear recursos en algunos navegadores.
 
-1. Subir el repositorio a GitHub
-2. Ir a **Settings → Pages → Source: main branch / root**
-3. El dashboard queda publicado en `https://usuario.github.io/roca-archivo-digital`
+### Publicar en Netlify (opción más simple)
+
+1. Crear cuenta en [netlify.com](https://netlify.com)
+2. Arrastrar la carpeta `roca-archivo-digital/` a la pantalla de Netlify
+3. En **Site settings → Change site name** elegir la URL deseada
+
+### Publicar en GitHub Pages
+
+```bash
+git init && git add . && git commit -m "init"
+git remote add origin https://github.com/org/roca-archivo-digital.git
+git push -u origin main
+# Activar Pages en Settings → Pages → Branch: main / root
+```
 
 ---
 
-## Cómo actualizar los datos
+## Funcionalidades — v6
 
-Los datos viven en los archivos Excel de `/data/`. El flujo para actualizar es:
+### Dashboard analítico
+
+| Gráfico | Descripción | Filtrable |
+|---------|-------------|-----------|
+| Top 10 Tipologías | Barras horizontales ordenadas por cantidad | ✓ |
+| Por País | Donut con porcentajes | ✓ |
+| Realizados vs No ejecutados | Barras comparativas | ✓ |
+| Por Década | Línea proyectados vs realizados | ✓ |
+| Matriz de Intensidad | Heatmap décadas × top 10 tipologías | — |
+| Sankey País × Tipología | Flujos (países con >1 proyecto) | — |
+
+### Filtrado cruzado multi-dimensional
+
+Clic en cualquier elemento de un gráfico agrega ese filtro. Se pueden combinar varios simultáneamente (ej. Tipología **UNC** + País **Argentina** + Realizados **SI**). Cada filtro activo aparece como chip individual con su botón `✕` para quitarlo de forma independiente.
+
+### Mapas interactivos
+
+**4 capas seleccionables** en ambos mapas mediante el switcher en esquina superior izquierda:
+
+| Capa | Descripción |
+|------|-------------|
+| Estándar | CartoDB Voyager — cálido y detallado |
+| Oscuro | CartoDB Dark Matter |
+| Claro | CartoDB Light |
+| Satélite | ESRI World Imagery + etiquetas |
+
+El mapa mundial arranca en *Estándar* y Córdoba en *Satélite*. Al hacer clic en un marcador aparece un **icono pulsante dorado** y se abre la ficha del proyecto con imagen real, descripción completa y botones de links activos.
+
+---
+
+## Actualizar los datos
 
 ```bash
-# 1. Editar Roca_DB.xlsx o img_Roca_DB.xlsx en /data/
+# 1. Editar data/Roca_DB.xlsx o data/img_Roca_DB.xlsx
 
-# 2. Instalar dependencias (primera vez)
+# 2. Instalar dependencias (solo primera vez)
 pip install pandas openpyxl
 
-# 3. Re-exportar a JS y JSON
+# 3. Regenerar
 python scripts/export_data.py
 
-# 4. Refrescar el navegador — los cambios se reflejan automáticamente
+# 4. Refrescar el navegador
 ```
 
 ---
 
-## Funcionalidades
+## Personalización rápida
 
-### Dashboard — Filtrado cruzado
-Al hacer clic en cualquier elemento de un gráfico (barra, sector, punto), todos los demás se actualizan para mostrar solo los proyectos que coinciden con ese filtro — igual que en Power BI. Un clic en el mismo elemento o en "✕ Limpiar filtro" vuelve al estado completo.
+### Colores del tema
+Editar variables en `css/styles.css` → bloque `:root {}`:
+```css
+:root {
+  --bg:   #111009;   /* fondo principal */
+  --acc:  #F4821A;   /* acento naranja */
+  --acc2: #F4C820;   /* acento dorado */
+  /* ... */
+}
+```
 
-Dimensiones filtrables:
-- **Tipología** (destino): UNC, Banco, Espacio Público, Centro Cultural, etc.
-- **País**: Argentina, Bolivia, Sudáfrica, etc.
-- **Estado**: Realizados / No ejecutados
-- **Década**: 1960s, 1970s, 1980s, 1990s, 2000s, 2010s, 2020s
+### Paleta de gráficos
+Editar `const PAL = [...]` en `js/app.js`.
 
-### Mapas
-- **Mapa Mundial**: tiles CartoDB Voyager, clustering automático, popup con imagen
-- **Mapa Córdoba**: imagen satelital ESRI + etiquetas oscuras superpuestas
-- Al hacer clic en un marcador → se abre la **ficha del proyecto** en el panel lateral con imagen, descripción completa, años y botones de links
-
-### Ficha del proyecto (Scheda)
-- Imagen real del proyecto (desde Wix CDN)
-- Descripción completa sin truncar
-- Botón **"↗ Más Info"** → página oficial en `miguelangelroca.com.ar`
-- Botón **"⟳ Link 360°"** → tour virtual (disponible en 2 proyectos)
+### Agregar un proyecto manualmente
+Agregar un objeto al array en `js/data.js` (o mejor: editar el Excel y re-exportar).
 
 ---
 
@@ -123,81 +135,18 @@ Dimensiones filtrables:
 
 | Librería | Versión | Uso |
 |----------|---------|-----|
-| [Leaflet](https://leafletjs.com/) | 1.9.4 | Mapas interactivos |
-| [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster) | 1.5.3 | Agrupación de marcadores |
-| [Chart.js](https://www.chartjs.org/) | 4.4.0 | Gráficos del dashboard |
-| [Google Fonts](https://fonts.google.com/) | — | Playfair Display, DM Mono, Crimson Pro |
-| CartoDB / ESRI | — | Tiles de mapas (CDN gratuito) |
+| [Leaflet](https://leafletjs.com/) | 1.9.4 | Mapas |
+| [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster) | 1.5.3 | Clustering |
+| [Chart.js](https://www.chartjs.org/) | 4.4.0 | Gráficos |
+| [chartjs-chart-sankey](https://github.com/kurkle/chartjs-chart-sankey) | 0.12.1 | Diagrama Sankey |
+| CartoDB / ESRI | — | Tiles de mapa |
 
-Sin frameworks JavaScript, sin build tools, sin dependencias npm. Solo HTML + CSS + JS vanilla.
-
----
-
-## Personalización
-
-### Cambiar colores
-Editar las variables CSS en `css/styles.css`, bloque `:root {}`:
-
-```css
-:root {
-  --bg:    #111009;  /* fondo principal */
-  --bg2:   #1a190f;  /* fondo tarjetas */
-  --acc:   #F4821A;  /* color de acento (naranja) */
-  --acc2:  #F4C820;  /* acento secundario (dorado) */
-  --txt:   #ede5d4;  /* texto principal */
-  /* ... */
-}
-```
-
-### Cambiar la paleta de gráficos
-En `js/app.js`, modificar el array `PAL`:
-
-```javascript
-const PAL = [
-  '#F4821A', // naranja terracota
-  '#E83060', // coral/fucsia
-  '#44B840', // verde vivo
-  // ... 18 colores en total
-];
-```
-
-### Agregar un proyecto manualmente
-Editar `js/data.js` y agregar un objeto al array `projects`:
-
-```javascript
-{
-  "id": 121,
-  "name": "Nombre del proyecto",
-  "ap": 2024,           // año de proyecto
-  "ar": null,           // año de realización (null si no ejecutado)
-  "si": "NO",           // "SI" | "NO"
-  "ciudad": "Córdoba",
-  "provincia": "Córdoba",
-  "pais": "Argentina",
-  "dest": "Espacio Público",
-  "desc": "Descripción del proyecto...",
-  "lat": -31.416,
-  "lng": -64.185,
-  "l360": "",           // URL 360° o cadena vacía
-  "lp": "https://...", // URL página del proyecto
-  "img": "https://..."  // URL imagen
-}
-```
+Sin frameworks, sin build tools, sin npm. HTML + CSS + JS vanilla.
 
 ---
 
 ## Contexto académico
 
-Este trabajo forma parte de la investigación sobre digitalización del patrimonio arquitectónico de Miguel Ángel Roca, en el marco del proyecto:
-
 **TNE23-00074 — Fragility, Marginality, Mobility, Energy Transition (FraMMET)**  
-CUP: C96G23000270001  
-Financiado por el MUR a través del PNRR — NextGenerationEU  
+CUP: C96G23000270001 · MUR / PNRR · NextGenerationEU  
 Dipartimento di Ingegneria Civile, Università degli Studi di Salerno
-
----
-
-## Licencia
-
-Los datos del dataset son propiedad del archivo de Miguel Ángel Roca y del proyecto FraMMET.  
-El código del dashboard puede reutilizarse libremente con atribución.

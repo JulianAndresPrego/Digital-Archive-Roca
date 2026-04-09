@@ -1,61 +1,118 @@
-/* ══════════════════════════════════════════════════════════════════
-   app.js — Lógica principal del dashboard interactivo
-   
-   SECCIONES:
-   ─────────────────────────────────────────────────────────────────
-   CROSS-FILTER STATE    Filtrado cruzado entre gráficos (estilo PBI)
-   CHART SETUP           Chart.js: paleta, inicialización, actualización
-   NAVIGATION            Cambio entre páginas (Inicio/Dashboard/Mapas)
-   LINK HELPER           Activación dinámica de botones de links
-   SCHEDA                Panel lateral con ficha del proyecto + imagen
-   MAPS                  Leaflet: mapa mundial (Voyager) + Córdoba (ESRI satélite)
-   
-   DEPENDENCIAS (cargadas en index.html antes que este archivo):
-   ─────────────────────────────────────────────────────────────────
-   · Leaflet 1.9.4              — mapas interactivos
-   · Leaflet.markercluster      — agrupación de marcadores
-   · Chart.js 4.4.0             — gráficos del dashboard
-   · js/data.js                 — array global `projects`
-   ══════════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════════
+   app.js  |  Lógica principal del dashboard  |  v6
+   ──────────────────────────────────────────────────────────────────────
+   SECCIONES
+   ──────────────────────────────────────────────────────────────────────
+   CROSS-FILTER STATE    Filtrado multi-dimensional con chips individuales
+                         activeFilters: Map<field,value>
+                         Dimensiones: dest · pais · si · dec
 
-/* ═══════════════════════════════
-   CROSS-FILTER STATE
-   ═══════════════════════════════ */
-let activeFilter = { field: null, value: null };
+   CHART SETUP           buildDestChart()    barras top 10 tipologías
+                         buildPaisChart()    donut por país
+                         buildTangChart()    realizados vs no ejecutados
+                         buildDecChart()     línea proyectados vs realizados
+                         buildHeatmap()      matriz décadas × top 10 tipologías
+                         buildSankeyChart()  flujo país × tipología (>1 proyecto)
+
+   NAVIGATION            showPage(id)
+
+   LINK HELPER           setLink(elId, url, is360)
+
+   SCHEDA                renderScheda(panel, proj)
+
+   MAPS                  TILE_DEFS     4 capas: voyager · dark · light · satellite
+                         setLayer()    cambia capa en caliente
+                         mkIcon()      marcador normal / no ejecutado
+                         mkIconSelected() marcador con animación pulse
+                         selectMarker()   aplica icono y restaura anterior
+                         initMapWorld()   mapa mundial con clustering
+                         initMapCba()     Córdoba con imagen satelital ESRI
+
+   ──────────────────────────────────────────────────────────────────────
+   DEPENDENCIAS (index.html las carga antes que este archivo)
+   ──────────────────────────────────────────────────────────────────────
+   Leaflet 1.9.4 · Leaflet.markercluster 1.5.3
+   Chart.js 4.4.0 · chartjs-chart-sankey 0.12.1
+   js/data.js  →  array global `projects`
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════
+   CROSS-FILTER STATE — multidimensional
+   activeFilters: Map de field → value
+   Ej: { dest:'UNC', pais:'Argentina' }
+   ═══════════════════════════════════════════════════════ */
+const activeFilters = new Map();
+
+const FIELD_LABELS = {
+  dest: 'Tipología',
+  pais: 'País',
+  si:   'Estado',
+  dec:  'Década',
+};
 
 function getFiltered(){
-  if(!activeFilter.field) return projects;
-  return projects.filter(p => String(p[activeFilter.field]) === String(activeFilter.value));
+  if(activeFilters.size === 0) return projects;
+  return projects.filter(p =>
+    [...activeFilters.entries()].every(([field, value]) => {
+      if(field === 'dec') return decOf(p.ap) === Number(value);
+      return String(p[field]) === String(value);
+    })
+  );
 }
 
 function applyFilter(field, value){
-  // Toggle: same → clear
-  if(activeFilter.field===field && activeFilter.value===value){
-    clearFilter(); return;
+  // Toggle: mismo campo+valor → quitar ese filtro
+  if(activeFilters.has(field) && String(activeFilters.get(field)) === String(value)){
+    activeFilters.delete(field);
+  } else {
+    activeFilters.set(field, value);
   }
-  activeFilter = { field, value };
   updateFilterBar();
   rebuildAllCharts();
 }
 
-function clearFilter(){
-  activeFilter = { field: null, value: null };
+function removeFilter(field){
+  activeFilters.delete(field);
   updateFilterBar();
   rebuildAllCharts();
 }
+
+function clearAllFilters(){
+  activeFilters.clear();
+  updateFilterBar();
+  rebuildAllCharts();
+}
+
+// alias para compatibilidad
+function clearFilter(){ clearAllFilters(); }
 
 function updateFilterBar(){
   const bar   = document.getElementById('filter-bar');
-  const fval  = document.getElementById('filter-val');
+  const chips = document.getElementById('filter-chips');
   const fcnt  = document.getElementById('filter-count');
-  if(activeFilter.field){
-    const filtered = getFiltered();
-    bar.classList.add('visible');
-    fval.textContent = activeFilter.value;
-    fcnt.textContent = `· ${filtered.length} de 120 proyectos`;
-  } else {
+
+  if(activeFilters.size === 0){
     bar.classList.remove('visible');
+    chips.innerHTML = '';
+    return;
   }
+
+  bar.classList.add('visible');
+
+  // Renderizar chips
+  chips.innerHTML = [...activeFilters.entries()].map(([field, value]) => {
+    const label = FIELD_LABELS[field] || field;
+    const display = field==='dec' ? value+'s' : value;
+    const siDisplay = field==='si' ? (value==='SI'?'Realizados':'No ejecutados') : display;
+    return `<span class="fchip">
+      <span style="color:#F4C820;font-size:6.5px;letter-spacing:.1em">${label}</span>
+      <span>${siDisplay}</span>
+      <span class="fchip-x" onclick="removeFilter('${field}')">✕</span>
+    </span>`;
+  }).join('');
+
+  const filtered = getFiltered();
+  fcnt.textContent = `· ${filtered.length} de 120 proyectos`;
 }
 
 /* ═══════════════════════════════
@@ -89,12 +146,12 @@ Chart.defaults.font.family="'DM Mono',monospace";
 Chart.defaults.font.size=9;
 
 // All distinct values pre-computed (from full dataset, never change)
-const ALL_DESTS  = [...new Set(projects.map(p=>p.dest))].sort((a,b)=>projects.filter(r=>r.dest===b).length-projects.filter(r=>r.dest===a).length);
+const ALL_DESTS  = [...new Set(projects.map(p=>p.dest))].sort((a,b)=>projects.filter(r=>r.dest===b).length-projects.filter(r=>r.dest===a).length).slice(0,10);
 const ALL_PAISES = [...new Set(projects.map(p=>p.pais))].sort((a,b)=>projects.filter(r=>r.pais===b).length-projects.filter(r=>r.pais===a).length);
 const DECS       = [1960,1970,1980,1990,2000,2010,2020];
 
 // Chart instances
-let chDest, chPais, chTang, chDec;
+let chDest, chPais, chTang, chDec, chSankey;
 
 function cnt(arr,k,v){ return arr.filter(r=>String(r[k])===String(v)).length; }
 function decOf(y){ return y ? Math.floor(y/10)*10 : null; }
@@ -115,6 +172,7 @@ function initDashboard(){
   buildTangChart();
   buildDecChart();
   buildHeatmap(projects);
+  buildSankeyChart();
 }
 
 /* ── Tipología ── */
@@ -123,8 +181,8 @@ function buildDestChart(){
   const data     = ALL_DESTS.map(d=>cnt(filtered,'dest',d));
   const bgBase   = ALL_DESTS.map((_,i)=>PAL[i%PAL.length]);
   const bg       = ALL_DESTS.map((d,i)=>{
-    if(!activeFilter.field || activeFilter.field!=='dest') return bgBase[i];
-    return String(activeFilter.value)===d ? bgBase[i] : 'rgba(255,255,255,.07)';
+    if(!activeFilters.has('dest')) return bgBase[i];
+    return String(activeFilters.get('dest'))===d ? bgBase[i] : 'rgba(255,255,255,.07)';
   });
 
   if(chDest){ chDest.data.datasets[0].data=data; chDest.data.datasets[0].backgroundColor=bg; chDest.update('none'); return; }
@@ -150,8 +208,8 @@ function buildPaisChart(){
   const data     = ALL_PAISES.map(p=>cnt(filtered,'pais',p));
   const bgBase   = ALL_PAISES.map((_,i)=>PAL[i%PAL.length]);
   const bg       = ALL_PAISES.map((p,i)=>{
-    if(!activeFilter.field || activeFilter.field!=='pais') return bgBase[i];
-    return String(activeFilter.value)===p ? bgBase[i] : 'rgba(255,255,255,.07)';
+    if(!activeFilters.has('pais')) return bgBase[i];
+    return String(activeFilters.get('pais'))===p ? bgBase[i] : 'rgba(255,255,255,.07)';
   });
 
   if(chPais){
@@ -187,8 +245,8 @@ function buildTangChart(){
   const no       = filtered.filter(p=>p.si==='NO').length;
   const bgBase   = [GN,RD];
   const bg       = ['SI','NO'].map((v,i)=>{
-    if(!activeFilter.field || activeFilter.field!=='si') return bgBase[i];
-    return String(activeFilter.value)===v ? bgBase[i] : 'rgba(255,255,255,.07)';
+    if(!activeFilters.has('si')) return bgBase[i];
+    return String(activeFilters.get('si'))===v ? bgBase[i] : 'rgba(255,255,255,.07)';
   });
 
   if(chTang){
@@ -223,12 +281,12 @@ function buildDecChart(){
     chDec.data.datasets[1].data=realData;
     // Highlight selected decade
     const ptBg0 = DECS.map(d=>{
-      if(!activeFilter.field || activeFilter.field!=='dec') return A2;
-      return String(activeFilter.value)===String(d) ? '#fff' : 'rgba(232,169,107,.25)';
+      if(!activeFilters.has('dec')) return A2;
+      return String(activeFilters.get('dec'))===String(d) ? '#fff' : 'rgba(232,169,107,.25)';
     });
     const ptBg1 = DECS.map(d=>{
-      if(!activeFilter.field || activeFilter.field!=='dec') return GN;
-      return String(activeFilter.value)===String(d) ? '#fff' : 'rgba(122,170,110,.25)';
+      if(!activeFilters.has('dec')) return GN;
+      return String(activeFilters.get('dec'))===String(d) ? '#fff' : 'rgba(122,170,110,.25)';
     });
     chDec.data.datasets[0].pointBackgroundColor=ptBg0;
     chDec.data.datasets[1].pointBackgroundColor=ptBg1;
@@ -258,7 +316,7 @@ function buildDecChart(){
 
 /* ── Heatmap ── */
 function buildHeatmap(data){
-  const dests=[...new Set(projects.map(p=>p.dest))].sort((a,b)=>projects.filter(r=>r.dest===b).length-projects.filter(r=>r.dest===a).length);
+  const dests=[...new Set(projects.map(p=>p.dest))].sort((a,b)=>projects.filter(r=>r.dest===b).length-projects.filter(r=>r.dest===a).length).slice(0,10);
   const hm={};
   DECS.forEach(d=>{ hm[d]={}; dests.forEach(ds=>{ hm[d][ds]=0; }); });
   data.forEach(p=>{
@@ -271,24 +329,123 @@ function buildHeatmap(data){
   function cellBg(v){
     if(!v) return 'rgba(0,0,0,0)';
     const t=v/mx;
-    return `rgba(${Math.round(26+170*t)},${Math.round(25+88*t)},${Math.round(15+43*t)},${.3+t*.7})`;
+    // degradado: amarillo dorado → naranja terracota vivo
+    const r=Math.round(244-40*t), g=Math.round(200-120*t), b=Math.round(32-22*t);
+    return `rgba(${r},${g},${b},${.22+t*.78})`;
   }
-  function cellTxt(v){ return v>=6?'#f5efdf':v>=3?'#e8a96b':v>=1?'#9c9278':'transparent'; }
+  function cellTxt(v){ return v>=5?'#111009':v>=2?'#1a0a00':v>=1?'#c8a030':'transparent'; }
 
   let h='<thead><tr><th>Década</th>'+dests.map(d=>`<th title="${d}">${d.length>12?d.slice(0,11)+'…':d}</th>`).join('')+'</tr></thead><tbody>';
   DECS.forEach(d=>{
     // highlight row if filtering by decade
-    const rowStyle = (activeFilter.field==='dec' && String(activeFilter.value)===String(d))
-      ? ' style="outline:1px solid rgba(196,113,58,.5)"' : '';
+    const rowStyle = (activeFilters.has('dec') && String(activeFilters.get('dec'))===String(d))
+      ? ' style="outline:1px solid rgba(244,200,32,.5)"' : '';
     h+=`<tr${rowStyle}><td>${d}s</td>`+dests.map(ds=>{
       const v=hm[d][ds];
       // dim cell if its dest or pais is filtered out and doesn't match
       let extra='';
-      if(activeFilter.field==='dest' && activeFilter.value!==ds && v>0) extra='opacity:.25;';
+      if(activeFilters.has('dest') && String(activeFilters.get('dest'))!==ds && v>0) extra='opacity:.25;';
       return `<td style="background:${cellBg(v)};color:${cellTxt(v)};${extra}">${v||''}</td>`;
     }).join('')+'</tr>';
   });
   document.getElementById('hm').innerHTML=h+'</tbody>';
+}
+
+
+/* ── Sankey: País × Tipología ── */
+function buildSankeyChart(){
+  const filtered = getFiltered();
+
+  // Calcular flows — ignorar países con un solo proyecto en el filtro actual
+  const flows = [];
+  const pairs = {};
+  const paisTotal = {};
+  filtered.forEach(p=>{
+    paisTotal[p.pais] = (paisTotal[p.pais]||0)+1;
+  });
+  filtered.forEach(p=>{
+    if(!ALL_DESTS.includes(p.dest)) return; // solo top 10 tipologías
+    if(paisTotal[p.pais] <= 1) return;       // ignorar países con ≤1 proyecto
+    const key = p.pais+'|'+p.dest;
+    pairs[key] = (pairs[key]||0)+1;
+  });
+  Object.entries(pairs).forEach(([key,flow])=>{
+    const [from,to] = key.split('|');
+    if(flow>0) flows.push({from, to, flow});
+  });
+
+  // Paleta: países a la izquierda con colores del PAL
+  const allPaises = [...new Set(filtered.map(p=>p.pais))].filter(p=>paisTotal[p]>1).sort((a,b)=>
+    filtered.filter(r=>r.pais===b).length - filtered.filter(r=>r.pais===a).length
+  );
+  const paisColors = {};
+  allPaises.forEach((p,i)=>{ paisColors[p]=PAL[i%PAL.length]; });
+
+  // Color por nodo origen (país)
+  const colorFn = (node)=>{
+    if(paisColors[node.key]) return paisColors[node.key]+'cc';
+    return 'rgba(200,180,150,.5)';
+  };
+
+  // Sankey necesita destroy+recreate para actualizar correctamente
+  if(chSankey){ chSankey.destroy(); chSankey=null; }
+
+  if(flows.length === 0){
+    const ctx = document.getElementById('ch-sankey').getContext('2d');
+    ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+    ctx.fillStyle='#a89070';
+    ctx.font="11px 'DM Mono', monospace";
+    ctx.textAlign='center';
+    ctx.fillText('Sin datos para el filtro actual', ctx.canvas.width/2, ctx.canvas.height/2);
+    return;
+  }
+
+  chSankey = new Chart('ch-sankey',{
+    type: 'sankey',
+    data:{
+      datasets:[{
+        data: flows,
+        colorFrom: (c)=>{
+          const d = c.dataset.data[c.dataIndex];
+          return d ? (paisColors[d.from]||'#888')+'bb' : '#888bb';
+        },
+        colorTo: (c)=>{
+          const d = c.dataset.data[c.dataIndex];
+          // Destino: color más suave basado en el índice de ALL_DESTS
+          const i = ALL_DESTS.indexOf(d?.to||'');
+          return i>=0 ? PAL[i%PAL.length]+'55' : 'rgba(200,180,150,.2)';
+        },
+        colorMode: 'gradient',
+        borderWidth: 0,
+        nodeWidth: 14,
+        nodePadding: 12,
+        color: '#e0d4c0',           // color de labels de nodos
+        size: 'max',
+      }]
+    },
+    options:{
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins:{
+        legend:{ display:false },
+        tooltip:{
+          backgroundColor:'rgba(26,25,15,.92)',
+          borderColor:'rgba(244,200,32,.3)',
+          borderWidth:1,
+          titleColor:'#F4C820',
+          bodyColor:'#e0d4c0',
+          callbacks:{
+            title(){ return ''; },
+            label(c){
+              const d = c.dataset.data[c.dataIndex];
+              if(!d) return '';
+              return `  ${d.from}  →  ${d.to}:  ${d.flow} proyecto${d.flow>1?'s':''}`;
+            }
+          }
+        }
+      }
+    }
+  });
 }
 
 /* Rebuild everything from current filter */
@@ -298,12 +455,13 @@ function rebuildAllCharts(){
   buildTangChart();
   buildDecChart();
   buildHeatmap(getFiltered());
-  // Highlight source card
+  buildSankeyChart();
+  // Highlight source cards (puede haber varios activos)
   ['dest','pais','tang','dec'].forEach(id=>{
     const fieldMap={dest:'dest',pais:'pais',tang:'si',dec:'dec'};
     const card=document.getElementById('card-'+id);
     if(!card) return;
-    card.classList.toggle('has-filter', activeFilter.field===fieldMap[id]);
+    card.classList.toggle('has-filter', activeFilters.has(fieldMap[id]));
   });
 }
 
@@ -388,48 +546,155 @@ function renderScheda(panel, proj){
 /* ═══════════════════════════════
    MAPS
    ═══════════════════════════════ */
-function mkIcon(si){
-  return L.divIcon({className:'',html:`<div class="rm${si==='NO'?' no':''}"></div>`,iconSize:[11,11],iconAnchor:[5,5],popupAnchor:[0,-10]});
+
+/* ═══════════════════════════════════════════════════════════
+   TILE LAYERS DISPONIBLES
+   ═══════════════════════════════════════════════════════════ */
+const TILE_DEFS = {
+  voyager: {
+    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+    opts: {attribution:'© OpenStreetMap © CARTO', subdomains:'abcd', maxZoom:19},
+    labels: null
+  },
+  dark: {
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    opts: {attribution:'© OpenStreetMap © CARTO', subdomains:'abcd', maxZoom:19},
+    labels: null
+  },
+  light: {
+    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    opts: {attribution:'© OpenStreetMap © CARTO', subdomains:'abcd', maxZoom:19},
+    labels: null
+  },
+  satellite: {
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    opts: {attribution:'Tiles © Esri', maxZoom:19},
+    labels: {
+      url:'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',
+      opts:{attribution:'', subdomains:'abcd', maxZoom:19}
+    }
+  }
+};
+
+/* Estado de capas activas por mapa */
+const mapState = {
+  world: { map: null, baseTile: null, labelTile: null, cluster: null, activeLayer: 'voyager', selectedMarker: null },
+  cba:   { map: null, baseTile: null, labelTile: null, cluster: null, activeLayer: 'satellite', selectedMarker: null }
+};
+
+/* ── setLayer: cambia la capa base del mapa ── */
+function setLayer(which, layerKey){
+  const st = mapState[which];
+  if(!st.map) return;
+  const def = TILE_DEFS[layerKey];
+
+  // Quitar capas actuales
+  if(st.baseTile)  st.map.removeLayer(st.baseTile);
+  if(st.labelTile) st.map.removeLayer(st.labelTile);
+
+  // Agregar nueva base
+  st.baseTile = L.tileLayer(def.url, def.opts).addTo(st.map);
+
+  // Agregar labels si tiene (satélite)
+  if(def.labels){
+    st.labelTile = L.tileLayer(def.labels.url, def.labels.opts).addTo(st.map);
+  } else {
+    st.labelTile = null;
+  }
+
+  st.activeLayer = layerKey;
+
+  // Actualizar botones UI
+  document.querySelectorAll(`#ls-${which} .ls-btn`).forEach(b=>{
+    b.classList.toggle('active', b.id === `ls-${which}-${layerKey}`);
+  });
 }
+
+/* ── Iconos de marcador ── */
+function mkIcon(si){
+  const cls = si==='NO' ? 'rm no' : 'rm';
+  return L.divIcon({
+    className:'',
+    html:`<div class="${cls}"></div>`,
+    iconSize:[11,11], iconAnchor:[5,5], popupAnchor:[0,-14]
+  });
+}
+
+function mkIconSelected(){
+  return L.divIcon({
+    className:'',
+    html:'<div class="rm-selected"></div>',
+    iconSize:[28,28], iconAnchor:[14,14], popupAnchor:[0,-18]
+  });
+}
+
+function selectMarker(which, marker, proj){
+  const st = mapState[which];
+  // Restaurar marcador anterior
+  if(st.selectedMarker && st.selectedMarker !== marker){
+    st.selectedMarker.setIcon(mkIcon(st.selectedMarker._projData.si));
+  }
+  // Aplicar icono seleccionado
+  marker.setIcon(mkIconSelected());
+  st.selectedMarker = marker;
+  st.selectedMarker._projData = proj;
+  renderScheda(which, proj);
+}
+
 function ppHtml(p){
   const im=p.img&&p.img.startsWith('http')?`<img class="ppimg" src="${p.img}" loading="lazy" onerror="this.style.display='none'">`:'';
   return `${im}<strong>${p.name}</strong>${p.dest} · ${p.ap}${p.ar?'–'+p.ar:''} · ${p.ciudad}`;
 }
 
+
 function initMapWorld(){
   mapWInit=true;
-  const map=L.map('map-world',{center:[-20,-40],zoom:3});
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
-    attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19
-  }).addTo(map);
-  const cl=L.markerClusterGroup({maxClusterRadius:40,showCoverageOnHover:false});
+  const st = mapState['world'];
+  st.map = L.map('map-world',{center:[-20,-40],zoom:3,zoomControl:true});
+
+  // Capa inicial
+  const def = TILE_DEFS[st.activeLayer];
+  st.baseTile = L.tileLayer(def.url, def.opts).addTo(st.map);
+
+  // Cluster
+  st.cluster = L.markerClusterGroup({maxClusterRadius:40,showCoverageOnHover:false});
+
   projects.forEach(p=>{
     if(!p.lat||!p.lng) return;
-    const m=L.marker([p.lat,p.lng],{icon:mkIcon(p.si)});
+    const m = L.marker([p.lat,p.lng],{icon:mkIcon(p.si)});
+    m._projData = p;
     m.bindPopup(ppHtml(p),{maxWidth:220});
-    m.on('click',()=>renderScheda('world',p));
-    cl.addLayer(m);
+    m.on('click',()=>{ selectMarker('world',m,p); });
+    st.cluster.addLayer(m);
   });
-  map.addLayer(cl);
+  st.map.addLayer(st.cluster);
 }
+
+
 
 function initMapCba(){
   mapCInit=true;
-  const cba=projects.filter(p=>p.ciudad==='Córdoba');
-  const map=L.map('map-cba',{center:[-31.416,-64.185],zoom:13});
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{
-    attribution:'Tiles © Esri',maxZoom:19
-  }).addTo(map);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',{
-    attribution:'',subdomains:'abcd',maxZoom:19
-  }).addTo(map);
-  const cl=L.markerClusterGroup({maxClusterRadius:50,showCoverageOnHover:false});
+  const st = mapState['cba'];
+  const cba = projects.filter(p=>p.ciudad==='Córdoba');
+  st.map = L.map('map-cba',{center:[-31.416,-64.185],zoom:13,zoomControl:true});
+
+  // Capa inicial: satélite + labels
+  const def = TILE_DEFS[st.activeLayer];
+  st.baseTile = L.tileLayer(def.url, def.opts).addTo(st.map);
+  if(def.labels){
+    st.labelTile = L.tileLayer(def.labels.url, def.labels.opts).addTo(st.map);
+  }
+
+  // Cluster
+  st.cluster = L.markerClusterGroup({maxClusterRadius:50,showCoverageOnHover:false});
+
   cba.forEach(p=>{
     if(!p.lat||!p.lng) return;
-    const m=L.marker([p.lat,p.lng],{icon:mkIcon(p.si)});
+    const m = L.marker([p.lat,p.lng],{icon:mkIcon(p.si)});
+    m._projData = p;
     m.bindPopup(ppHtml(p),{maxWidth:220});
-    m.on('click',()=>renderScheda('cba',p));
-    cl.addLayer(m);
+    m.on('click',()=>{ selectMarker('cba',m,p); });
+    st.cluster.addLayer(m);
   });
-  map.addLayer(cl);
+  st.map.addLayer(st.cluster);
 }
