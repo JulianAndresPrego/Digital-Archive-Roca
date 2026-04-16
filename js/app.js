@@ -1,40 +1,8 @@
-/* ══════════════════════════════════════════════════════════════════════
-   app.js  |  Lógica principal del dashboard  |  v6
-   ──────────────────────────────────────────────────────────────────────
-   SECCIONES
-   ──────────────────────────────────────────────────────────────────────
-   CROSS-FILTER STATE    Filtrado multi-dimensional con chips individuales
-                         activeFilters: Map<field,value>
-                         Dimensiones: dest · pais · si · dec
-
-   CHART SETUP           buildDestChart()    barras top 10 tipologías
-                         buildPaisChart()    donut por país
-                         buildTangChart()    realizados vs no ejecutados
-                         buildDecChart()     línea proyectados vs realizados
-                         buildHeatmap()      matriz décadas × top 10 tipologías
-                         buildSankeyChart()  flujo país × tipología (>1 proyecto)
-
-   NAVIGATION            showPage(id)
-
-   LINK HELPER           setLink(elId, url, is360)
-
-   SCHEDA                renderScheda(panel, proj)
-
-   MAPS                  TILE_DEFS     4 capas: voyager · dark · light · satellite
-                         setLayer()    cambia capa en caliente
-                         mkIcon()      marcador normal / no ejecutado
-                         mkIconSelected() marcador con animación pulse
-                         selectMarker()   aplica icono y restaura anterior
-                         initMapWorld()   mapa mundial con clustering
-                         initMapCba()     Córdoba con imagen satelital ESRI
-
-   ──────────────────────────────────────────────────────────────────────
-   DEPENDENCIAS (index.html las carga antes que este archivo)
-   ──────────────────────────────────────────────────────────────────────
-   Leaflet 1.9.4 · Leaflet.markercluster 1.5.3
-   Chart.js 4.4.0 · chartjs-chart-sankey 0.12.1
-   js/data.js  →  array global `projects`
-   ══════════════════════════════════════════════════════════════════════ */
+/* app.js — M.A.R. Archivo Digital | v7
+   Gráficos: Dest · Pais · Tang · Tipo · Ciudad · Dec · Heatmap · EU · Sankey
+   Filtros:  dest · pais · si · dec · eu · tipo (multi-dimensional)
+   Mapas:    4 capas · naranja/azul · icono seleccionado animado · 5 links
+*/
 
 /* ═══════════════════════════════════════════════════════
    CROSS-FILTER STATE — multidimensional
@@ -48,6 +16,8 @@ const FIELD_LABELS = {
   pais: 'País',
   si:   'Estado',
   dec:  'Década',
+  eu:   'Estrategia Urbana',
+  tipo: 'Tipo General',
 };
 
 function getFiltered(){
@@ -151,7 +121,7 @@ const ALL_PAISES = [...new Set(projects.map(p=>p.pais))].sort((a,b)=>projects.fi
 const DECS       = [1960,1970,1980,1990,2000,2010,2020];
 
 // Chart instances
-let chDest, chPais, chTang, chDec, chSankey;
+let chDest, chPais, chTang, chDec, chSankey, chEu, chTipo, chCiudad;
 
 function cnt(arr,k,v){ return arr.filter(r=>String(r[k])===String(v)).length; }
 function decOf(y){ return y ? Math.floor(y/10)*10 : null; }
@@ -167,11 +137,15 @@ function barColors(field, labels){
 }
 
 function initDashboard(){
+  dashInit=true;
   buildDestChart();
   buildPaisChart();
   buildTangChart();
+  buildTipoChart();
+  buildCiudadChart();
   buildDecChart();
   buildHeatmap(projects);
+  buildEuChart();
   buildSankeyChart();
 }
 
@@ -448,6 +422,155 @@ function buildSankeyChart(){
   });
 }
 
+
+/* ── Estrategias Urbanas ── */
+function buildEuChart(){
+  const filtered = getFiltered();
+  const euProjects = filtered.filter(p=>p.eu && p.eu.trim()!=='');
+
+  // Agrupar por estrategia
+  const euMap = {};
+  euProjects.forEach(p=>{
+    const si = p.si==='SI' ? 'real' : 'proy';
+    if(!euMap[p.eu]) euMap[p.eu]={real:0,proy:0};
+    euMap[p.eu][si]++;
+  });
+
+  const labels = Object.keys(euMap).sort((a,b)=>
+    (euMap[b].real+euMap[b].proy)-(euMap[a].real+euMap[a].proy)
+  );
+  const dataReal = labels.map(l=>euMap[l].real);
+  const dataProy = labels.map(l=>euMap[l].proy);
+
+  if(chEu){
+    chEu.data.labels=labels;
+    chEu.data.datasets[0].data=dataReal;
+    chEu.data.datasets[1].data=dataProy;
+    chEu.update('none');
+    return;
+  }
+
+  chEu = new Chart('ch-eu',{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'Realizados', data:dataReal, backgroundColor:'#F4821A', borderWidth:0, borderRadius:3},
+        {label:'Proyectados',data:dataProy, backgroundColor:'#2060c8', borderWidth:0, borderRadius:3}
+      ]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'top',labels:{color:T2,boxWidth:8,padding:10}},
+        tooltip:{callbacks:{label:c=>`  ${c.dataset.label}: ${c.parsed.x} proyectos`}}
+      },
+      scales:{
+        x:{grid:{color:BRD},ticks:{color:T2},stacked:true},
+        y:{grid:{display:false},ticks:{color:T2,font:{size:9}},stacked:true}
+      },
+      onClick(evt,els){
+        if(!els.length) return;
+        applyFilter('eu', labels[els[0].index]);
+      }
+    }
+  });
+}
+
+
+/* ── Tipo General ── */
+function buildTipoChart(){
+  const filtered = getFiltered();
+  const tipos = [...new Set(projects.map(p=>p.tipo).filter(Boolean))];
+  const data  = tipos.map(t=>cnt(filtered,'tipo',t));
+  const bg    = tipos.map((t,i)=>
+    activeFilters.has('tipo')
+      ? (String(activeFilters.get('tipo'))===t ? PAL[i%PAL.length] : 'rgba(255,255,255,.07)')
+      : PAL[i%PAL.length]
+  );
+
+  if(chTipo){
+    chTipo.data.datasets[0].data=data;
+    chTipo.data.datasets[0].backgroundColor=bg;
+    chTipo.update('none'); return;
+  }
+
+  chTipo = new Chart('ch-tipo',{
+    type:'doughnut',
+    data:{
+      labels: tipos,
+      datasets:[{
+        data,
+        backgroundColor: tipos.map((_,i)=>PAL[i%PAL.length]),
+        borderColor: BG2, borderWidth:2,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'52%',
+      plugins:{
+        legend:{position:'right', labels:{color:T2, boxWidth:8, font:{size:8}, padding:6}},
+        tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed} (${Math.round(c.parsed/filtered.length*100)}%)`}}
+      },
+      onClick(evt,els){
+        if(!els.length) return;
+        applyFilter('tipo', tipos[els[0].index]);
+      }
+    }
+  });
+}
+
+/* ── Concentración por Ciudad ── */
+function buildCiudadChart(){
+  const filtered = getFiltered();
+
+  // Contar por ciudad, ordenar desc, tomar top 12
+  const cityMap = {};
+  filtered.forEach(p=>{
+    if(p.ciudad) cityMap[p.ciudad] = (cityMap[p.ciudad]||0)+1;
+  });
+  const sorted = Object.entries(cityMap)
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,12);
+  const labels = sorted.map(([c])=>c);
+  const data   = sorted.map(([,n])=>n);
+
+  // Colores: ciudad con más proyectos en acc, resto degradado
+  const max = data[0]||1;
+  const bgColors = data.map((v,i)=>{
+    const t = v/max;
+    return `rgba(${Math.round(244-60*t)},${Math.round(130+50*t)},${Math.round(26+30*(1-t))},${0.35+t*0.65})`;
+  });
+
+  if(chCiudad){
+    chCiudad.data.labels=labels;
+    chCiudad.data.datasets[0].data=data;
+    chCiudad.data.datasets[0].backgroundColor=bgColors;
+    chCiudad.update('none'); return;
+  }
+
+  chCiudad = new Chart('ch-ciudad',{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        data, backgroundColor:bgColors,
+        borderWidth:0, borderRadius:3,
+      }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:c=>`  ${c.parsed.x} proyectos`}}
+      },
+      scales:{
+        x:{grid:{color:BRD}, ticks:{color:T2}},
+        y:{grid:{display:false}, ticks:{color:T2, font:{size:8}}}
+      }
+    }
+  });
+}
+
 /* Rebuild everything from current filter */
 function rebuildAllCharts(){
   buildDestChart();
@@ -455,10 +578,13 @@ function rebuildAllCharts(){
   buildTangChart();
   buildDecChart();
   buildHeatmap(getFiltered());
+  buildTipoChart();
+  buildCiudadChart();
+  buildEuChart();
   buildSankeyChart();
   // Highlight source cards (puede haber varios activos)
-  ['dest','pais','tang','dec'].forEach(id=>{
-    const fieldMap={dest:'dest',pais:'pais',tang:'si',dec:'dec'};
+  ['dest','pais','tang','dec','eu','tipo'].forEach(id=>{
+    const fieldMap={dest:'dest',pais:'pais',tang:'si',dec:'dec',eu:'eu',tipo:'tipo'};
     const card=document.getElementById('card-'+id);
     if(!card) return;
     card.classList.toggle('has-filter', activeFilters.has(fieldMap[id]));
@@ -506,8 +632,11 @@ function renderScheda(panel, proj){
   const card = document.getElementById('scard-'+panel);
   if(!proj){
     sem.style.display='flex'; card.innerHTML='';
-    setLink('lnk-'+panel+'-360','',true);
     setLink('lnk-'+panel+'-info','',false);
+    setLink('lnk-'+panel+'-360','',true);
+    setLink('lnk-'+panel+'-entrev','',false);
+    setLink('lnk-'+panel+'-3d','',false);
+    setLink('lnk-'+panel+'-legajo','',false);
     return;
   }
   sem.style.display='none';
@@ -539,8 +668,11 @@ function renderScheda(panel, proj){
       </div>
     </div>`;
 
-  setLink('lnk-'+panel+'-360', proj.l360, true);
-  setLink('lnk-'+panel+'-info', proj.lp,  false);
+  setLink('lnk-'+panel+'-info',   proj.lp,        false);
+  setLink('lnk-'+panel+'-360',   proj.l360,      true);
+  setLink('lnk-'+panel+'-entrev',proj.entrevista, false);
+  setLink('lnk-'+panel+'-3d',    proj.modelo3d,  false);
+  setLink('lnk-'+panel+'-legajo',proj.legajo,    false);
 }
 
 /* ═══════════════════════════════

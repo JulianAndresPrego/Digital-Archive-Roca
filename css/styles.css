@@ -1,15 +1,4 @@
-/* ══════════════════════════════════════════════════════════════════════
-   Miguel Ángel Roca — Archivo Digital  |  styles.css  |  v6
-   ──────────────────────────────────────────────────────────────────────
-   GUÍA DE MODIFICACIÓN RÁPIDA
-   ──────────────────────────────────────────────────────────────────────
-   Colores globales    → variables en :root {}
-   Paleta de gráficos  → const PAL en js/app.js
-   Tipografías         → @import en index.html + --fh/--fb/--fm en :root
-   Marcadores del mapa → .rm  .rm.no  .rm-selected
-   Layer switcher      → .layer-switcher  .ls-btn  .ls-btn.active
-   Chips de filtro     → .fchip  .fchip-x
-   ══════════════════════════════════════════════════════════════════════ */
+/* M.A.R. — Archivo Digital | styles.css | v7 */
 
 :root{
   --bg:#111009;--bg2:#1a190f;--bg3:#252418;--border:#333220;
@@ -124,8 +113,8 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fb
 .scname{font-family:var(--fh);font-size:16px;line-height:1.25;color:var(--cream);margin-bottom:9px;font-weight:400}
 .scst{display:inline-flex;align-items:center;gap:5px;font-family:var(--fm);font-size:7px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px}
 .scst .dot{width:5px;height:5px;border-radius:50%}
-.scst.si .dot{background:var(--grn)}.scst.si{color:var(--grn)}
-.scst.no .dot{background:var(--red)}.scst.no{color:var(--red)}
+.scst.si .dot{background:#F4821A}.scst.si{color:#F4821A}
+.scst.no .dot{background:#4090e8}.scst.no{color:#4090e8}
 .scdiv{border:none;border-top:1px solid var(--border);margin:10px 0}
 .scrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .scf{display:flex;flex-direction:column;gap:2px}
@@ -142,7 +131,7 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fb
 /* MARKER */
 .rm{width:11px;height:11px;border-radius:50%;background:#F4821A;border:2px solid rgba(255,200,80,.9);box-shadow:0 0 10px rgba(244,130,26,.8);cursor:pointer;transition:transform .12s}
 .rm:hover,.rm.sel{transform:scale(1.7);background:#F4C820;box-shadow:0 0 14px rgba(244,200,32,.9)}
-.rm.no{background:#2a2018;border-color:rgba(180,150,80,.3);box-shadow:0 0 4px rgba(0,0,0,.4)}
+.rm.no{background:#2060c8;border-color:rgba(100,160,255,.85);box-shadow:0 0 10px rgba(60,120,255,.65)}
 .marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(244,130,26,.2)!important}
 .marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:rgba(244,130,26,.85)!important;color:#fff!important;font-family:var(--fm)!important;font-size:9px!important}
 .leaflet-popup-content-wrapper{background:var(--bg2)!important;color:var(--txt)!important;border:1px solid var(--border)!important;border-radius:0!important;box-shadow:0 4px 24px rgba(0,0,0,.7)!important;min-width:180px}
@@ -203,3 +192,34 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fb
 
 /* ── Sankey label override ─────────────────────────────────────────── */
 #ch-sankey{color:#e0d4c0}
+
+
+/* ── HOME FOOTER ─────────────────────────────────────────────────── */
+.home-footer{
+  position:absolute;bottom:0;left:0;right:0;
+  display:flex;flex-direction:column;align-items:center;
+  gap:12px;padding:16px 24px 22px;
+  background:linear-gradient(transparent,rgba(17,16,9,.88));
+  z-index:1;pointer-events:none;
+}
+.home-footer-logos{
+  display:flex;align-items:center;justify-content:center;
+  gap:32px;pointer-events:all;
+}
+.home-footer-logo{
+  display:flex;align-items:center;justify-content:center;
+  height:58px;opacity:.82;transition:opacity .2s;
+}
+.home-footer-logo:hover{opacity:1}
+.home-footer-logo img{
+  max-height:58px;max-width:130px;
+  object-fit:contain;filter:brightness(1);
+}
+.home-footer-logo.frammet img{
+  max-height:64px;max-width:64px;
+  border-radius:10px;
+}
+.home-footer-copy{
+  font-family:var(--fm);font-size:7.5px;letter-spacing:.12em;
+  color:#c8a84a;text-align:center;pointer-events:none;
+}
