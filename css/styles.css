@@ -24,10 +24,10 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fb
 .page.active{display:flex}
 
 /* ── HOME ── */
-#page-home{flex-direction:column;align-items:center;justify-content:center;background:var(--bg);position:relative;overflow:hidden;background-image:radial-gradient(ellipse 70% 50% at 50% 55%,rgba(196,113,58,.07) 0%,transparent 65%)}
+#page-home{flex-direction:column;align-items:stretch;justify-content:flex-start;background:var(--bg);position:relative;overflow-y:auto;overflow-x:hidden;background-image:radial-gradient(ellipse 70% 50% at 50% 55%,rgba(196,113,58,.07) 0%,transparent 65%)}
 .grid-bg{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:40px 40px;opacity:.4}
 .big-r{position:absolute;font-family:var(--fh);font-size:min(55vw,400px);font-weight:700;color:rgba(196,113,58,.035);bottom:-10%;right:-5%;line-height:1;user-select:none;pointer-events:none}
-.hc{position:relative;z-index:1;text-align:center;padding:20px}
+.hc{position:relative;z-index:1;text-align:center;padding:clamp(16px,4vh,40px) 20px clamp(100px,18vh,160px);display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100%;}
 .eyebrow{font-family:var(--fm);font-size:8px;letter-spacing:.28em;text-transform:uppercase;color:var(--acc);margin-bottom:14px}
 .ht{font-family:var(--fh);font-size:clamp(40px,6vw,80px);font-weight:400;line-height:1.05;color:var(--cream);margin-bottom:6px}
 .ht em{font-style:italic;color:var(--acc2)}
@@ -196,11 +196,12 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fb
 
 /* ── HOME FOOTER ─────────────────────────────────────────────────── */
 .home-footer{
-  position:absolute;bottom:0;left:0;right:0;
+  position:sticky;bottom:0;left:0;right:0;
   display:flex;flex-direction:column;align-items:center;
-  gap:12px;padding:16px 24px 22px;
-  background:linear-gradient(transparent,rgba(17,16,9,.88));
-  z-index:1;pointer-events:none;
+  gap:12px;padding:14px 24px 20px;
+  background:linear-gradient(rgba(17,16,9,0),rgba(17,16,9,.96) 30%);
+  z-index:10;pointer-events:none;
+  margin-top:auto;
 }
 .home-footer-logos{
   display:flex;align-items:center;justify-content:center;
@@ -222,4 +223,27 @@ html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--fb
 .home-footer-copy{
   font-family:var(--fm);font-size:7.5px;letter-spacing:.12em;
   color:#c8a84a;text-align:center;pointer-events:none;
+}
+
+
+/* ── RESPONSIVE HOME ─────────────────────────────────────────────── */
+@media (max-height: 640px){
+  .ht{font-size:clamp(32px,5vw,56px)}
+  .hstats{gap:24px;margin-bottom:20px}
+  .stn{font-size:32px}
+  .hsub{margin-bottom:20px}
+}
+@media (max-width: 500px){
+  .hstats{gap:20px}
+  .stn{font-size:34px}
+  .home-footer-logos{gap:20px}
+  .home-footer-logo img{max-height:44px;max-width:90px}
+  .home-footer-logo.frammet img{max-height:48px;max-width:48px}
+}
+@media (max-width: 360px){
+  .ht{font-size:clamp(28px,9vw,44px)}
+  .hstats{gap:12px}
+  .stn{font-size:28px}
+  .hnav{flex-direction:column;align-items:center}
+  .hnav button{width:220px}
 }
