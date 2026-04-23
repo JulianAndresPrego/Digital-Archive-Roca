@@ -9,7 +9,7 @@
 [![Netlify Status](https://img.shields.io/badge/Netlify-Deploying-00C7B7?style=flat-square&logo=netlify&logoColor=white)]()
 [![License](https://img.shields.io/badge/license-academic-F4C820?style=flat-square)]()
 
-*Julián Andrés Prego · Prof. Fernando Fraternali · Università degli Studi di Salerno · 2026*
+*Julián Andrés Prego · Prof. Fernando Fraternali - Prof. Carla Ferreyra · Università degli Studi di Salerno · 2026*
 
 </div>
 
