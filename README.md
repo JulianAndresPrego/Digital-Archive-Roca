@@ -1,141 +1,157 @@
 <div align="center">
 
-# 🏛️ Miguel Ángel Roca — Archivo Digital
+# 🏛️ Miguel Ángel Roca — Digital Archive
 
-### Dashboard interactivo del patrimonio arquitectónico
+### Interactive dashboard of an architectural heritage
 
 [![FraMMET](https://img.shields.io/badge/FraMMET-TNE23--00074-F4821A?style=flat-square)]()
 [![PNRR](https://img.shields.io/badge/MUR-PNRR-2060c8?style=flat-square)]()
 [![Netlify Status](https://img.shields.io/badge/Netlify-Deploying-00C7B7?style=flat-square&logo=netlify&logoColor=white)]()
 [![License](https://img.shields.io/badge/license-academic-F4C820?style=flat-square)]()
 
-*Università degli Studi di Salerno · 2026*
+*Julián Andrés Prego · Prof. Fernando Fraternali · Università degli Studi di Salerno · 2026*
 
 </div>
 
 ---
 
-## 📖 Sobre el proyecto
+## 📖 About
 
-Archivo gráfico digital y museo virtual del arquitecto argentino **Miguel Ángel Roca** (1936–2025), desarrollado en el marco del proyecto **FraMMET** — *Fragility, Marginality, Mobility, Energy Transition* — financiado por el Ministerio de Universidad e Investigación italiano a través del PNRR, con sede en el Dipartimento di Ingegneria Civile de la Universidad de Salerno.
+Digital graphic archive and virtual museum of Argentine architect **Miguel Ángel Roca** (1936–2025), developed within the **FraMMET** project — *Fragility, Marginality, Mobility, Energy Transition* — funded by the Italian Ministry of University and Research through the PNRR, hosted at the Department of Civil Engineering of the University of Salerno.
 
-El sitio permite explorar **121 proyectos** del arquitecto a través de análisis dashboard, mapas georreferenciados y fichas detalladas de cada obra.
+The site allows exploration of **121 projects** through an analytical dashboard, georeferenced maps, and detailed project sheets.
 
-## ✨ Características
+## ✨ Features
 
-- 📊 **9 gráficos interactivos** con filtrado cruzado multi-dimensional (Tipología · País · Estado · Década · Estrategia Urbana · Tipo)
-- 🗺️ **Mapas Leaflet** con 4 capas intercambiables (Estándar · Oscuro · Claro · Satélite)
-- 📍 **121 proyectos georreferenciados** — ejecutados en naranja, no ejecutados en azul
-- 🎨 **Paleta viva** inspirada en los dibujos arquitectónicos de Roca
-- 🔗 **5 links por proyecto** — Más Info · Link 360° · Entrevista · Modelo 3D · Legajo Técnico
-- 📱 **Responsive** para desktop, tablet y mobile
+- 📊 **9 interactive charts** with multi-dimensional cross-filtering (Typology · Country · Status · Decade · Urban Strategy · Type)
+- 🗺️ **Leaflet maps** with 4 switchable tile layers (Standard · Dark · Light · Satellite)
+- 📍 **121 georeferenced projects** — built in orange, unbuilt in blue
+- 🎨 **Custom dark theme** inspired by Roca's architectural drawings
+- 🔗 **5 external links per project** — More Info · 360° Tour · Interview · 3D Model · Technical File
+- 📱 **Responsive** for desktop, tablet and mobile
 
-## 🛠️ Stack tecnológico
+## 🛠️ Tech stack
 
 | | |
 |---|---|
-| 🗺️ **Leaflet** | `1.9.4` — mapas interactivos |
-| 🧩 **Leaflet.markercluster** | `1.5.3` — agrupación de marcadores |
-| 📈 **Chart.js** | `4.4.0` — gráficos del dashboard |
-| 🌊 **chartjs-chart-sankey** | `0.12.1` — diagrama de flujo |
-| 🐍 **Python + pandas** | scripts de procesamiento de datos |
+| 🗺️ **Leaflet** | `1.9.4` — interactive maps |
+| 🧩 **Leaflet.markercluster** | `1.5.3` — marker clustering |
+| 📈 **Chart.js** | `4.4.0` — dashboard charts |
+| 🌊 **chartjs-chart-sankey** | `0.12.1` — flow diagram |
+| 🐍 **Python + pandas** | data processing scripts |
 | ⚡ **Netlify + GitHub** | hosting + CI/CD |
 
-**Sin frameworks JS · Sin npm · Sin build tools complicados · HTML + CSS + JS vanilla**
+**No JS frameworks · No npm · No build tools · Plain HTML + CSS + JavaScript**
 
-## 📂 Estructura del repositorio
+## 📂 Repository structure
 
 ```
 roca-archivo-digital/
 │
-├── 📄 index.html                       ← Punto de entrada
+├── 📄 index.html                       ← Entry point
 ├── 📄 README.md
-├── 📄 netlify.toml                     ← Configuración de Netlify
+├── 📄 netlify.toml                     ← Netlify configuration
 ├── 📄 .gitignore
 │
 ├── 📁 .github/workflows/
-│   └── 🔄 update_data.yml              ← Actualización automática desde Drive
+│   └── 🔄 update_data.yml              ← Automatic update from Google Drive
 │
 ├── 📁 css/
-│   └── 🎨 styles.css                   ← Tema oscuro · paleta Roca
+│   └── 🎨 styles.css                   ← Dark theme · Roca palette
 │
 ├── 📁 js/
-│   ├── 📊 data.js                      ← Dataset (generado automáticamente)
-│   └── ⚙️  app.js                      ← Lógica completa (gráficos, mapas, filtros)
+│   ├── 📊 data.js                      ← Dataset (auto-generated)
+│   └── ⚙️  app.js                      ← Full logic (charts, maps, filters)
 │
 ├── 📁 data/
-│   ├── 📗 Roca_DB.xlsx                 ← Base de datos principal
-│   ├── 🖼️  img_Roca_DB.xlsx            ← URLs de imágenes
-│   └── 📋 projects.json                ← Export JSON (generado)
+│   ├── 📗 Roca_DB.xlsx                 ← Main database ★ source of truth
+│   ├── 🖼️  img_Roca_DB.xlsx            ← Image URLs by project ID
+│   └── 📋 projects.json                ← JSON export (auto-generated)
 │
 ├── 📁 scripts/
 │   ├── 🐍 export_data.py               ← Excel → data.js
-│   └── 🐍 download_and_build.py        ← Build script para Netlify
+│   └── 🐍 download_and_build.py        ← Netlify-only build script
 │
-└── 📁 assets/                          ← Recursos estáticos
+└── 📁 assets/                          ← Static resources
 ```
 
 ## 🚀 Deploy
 
-El sitio está publicado en **Netlify** conectado directamente a este repositorio.
+The site is published on **Netlify** connected directly to this repository.
 
-**Flujo de actualización automática:**
+**Automatic update flow:**
 
 ```
 📗 Drive (Excel)  ──→  🔄 GitHub Actions  ──→  📦 data.js commit  ──→  🌐 Netlify deploy
       ↑                       ↑
-   editar acá         manual o cada 6h
+   edit here           manual or every 6h
 ```
 
-Cada vez que se actualiza el Excel en Google Drive:
-1. El workflow de GitHub descarga el archivo y regenera `js/data.js`
-2. El commit se pushea automáticamente
-3. Netlify detecta el push y redespliega el sitio en ~1 minuto
+Every time the Excel is updated in Google Drive:
+1. The GitHub Actions workflow downloads the file and regenerates `js/data.js`
+2. The commit is pushed automatically
+3. Netlify detects the push and redeploys the site in ~1 minute
 
-## 🔧 Actualización de datos
+## 🔧 Updating data
 
-### ⚡ Actualización inmediata (manual)
+### ⚡ Immediate update (manual)
 ```
 GitHub → Actions → "Actualizar datos desde Google Drive" → Run workflow
 ```
-El sitio queda actualizado en 2 minutos.
+The site updates in about 2 minutes.
 
-### 🔁 Actualización automática
-El workflow corre automáticamente cada 6 horas. Para cambiar la frecuencia, editar `.github/workflows/update_data.yml`:
+### 🔁 Automatic update
+The workflow runs automatically every 6 hours. To change the frequency, edit `.github/workflows/update_data.yml`:
 ```yaml
-- cron: '0 */6 * * *'   # cada 6 horas (actual)
-- cron: '0 8 * * *'     # una vez al día a las 8 AM UTC
-- cron: '0 */2 * * *'   # cada 2 horas
+- cron: '0 */6 * * *'   # every 6 hours (current)
+- cron: '0 8 * * *'     # once a day at 8 AM UTC
+- cron: '0 */2 * * *'   # every 2 hours
 ```
 
-### 💻 Desarrollo local
+### 💻 Local development
 ```bash
-# Editar data/Roca_DB.xlsx localmente
+# Edit data/Roca_DB.xlsx locally
 python scripts/export_data.py
 python3 -m http.server 8080
-# Abrir http://localhost:8080
+# Open http://localhost:8080
 ```
 
-## 🎨 Personalización
+## ⚙️ Initial setup (one time only)
 
-| ¿Qué quiero cambiar? | ¿Dónde? |
+**1.** Upload both Excel files to Google Drive and share them as *"Anyone with the link — Viewer"*. Copy the file ID from each URL:
+```
+https://drive.google.com/file/d/ ► THIS_IS_THE_ID ◄ /view
+```
+
+**2.** In the GitHub repository: **Settings → Secrets → Actions → New repository secret**
+
+| Secret | Value |
+|--------|-------|
+| `ROCA_DB_DRIVE_ID` | ID of `Roca_DB.xlsx` in Drive |
+| `IMG_DB_DRIVE_ID`  | ID of `img_Roca_DB.xlsx` in Drive |
+
+**3.** In [netlify.com](https://netlify.com): New site → Import from Git → select this repo → Publish directory: `.` → choose site name.
+
+## 🎨 Customization
+
+| What to change | Where |
 |---|---|
-| 🎨 Colores del tema | `css/styles.css` → `:root {}` |
-| 🌈 Paleta de gráficos | `js/app.js` → `const PAL` |
-| 🔤 Tipografías | `index.html` → Google Fonts import |
-| 📊 Agregar un gráfico | `js/app.js` → nueva función `buildXChart()` |
+| 🎨 Theme colors | `css/styles.css` → `:root {}` |
+| 🌈 Chart palette | `js/app.js` → `const PAL` |
+| 🔤 Fonts | `index.html` → Google Fonts import |
+| 📊 Add a new chart | `js/app.js` → new `buildXChart()` function |
 
-## 🎓 Contexto académico
+## 🎓 Academic context
 
 <table>
 <tr>
 <td>
 
-**Proyecto:** TNE23-00074 — FraMMET  
+**Project:** TNE23-00074 — FraMMET  
 **CUP:** C96G23000270001  
-**Financiamiento:** MUR / PNRR · NextGenerationEU  
-**Institución:** Dipartimento di Ingegneria Civile  
-**Universidad:** Università degli Studi di Salerno
+**Funding:** MUR / PNRR · NextGenerationEU  
+**Department:** Dipartimento di Ingegneria Civile (DCIV)  
+**University:** Università degli Studi di Salerno
 
 </td>
 </tr>
