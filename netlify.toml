@@ -1,0 +1,29 @@
+# netlify.toml — Configuración de build para Netlify
+# ═══════════════════════════════════════════════════════════════════
+# OPCIÓN A (recomendada): Netlify conectado a GitHub
+#   → Netlify detecta cada push al repo y redespliega automáticamente
+#   → No se necesita este archivo de build, solo conectar el repo
+#   → El build command puede quedar vacío ("") y publish = "."
+#
+# OPCIÓN B: Netlify descarga el Excel directamente desde Drive
+#   → Netlify corre este build script en cada redespliegue
+#   → El redespliegue se dispara con un Build Hook (URL secreta)
+#   → Ver instrucciones en README.md
+# ═══════════════════════════════════════════════════════════════════
+
+[build]
+  # Comando que Netlify ejecuta antes de publicar
+  command   = "pip install pandas openpyxl requests && python scripts/download_and_build.py"
+  # Carpeta que Netlify publica como sitio web
+  publish   = "."
+
+[build.environment]
+  PYTHON_VERSION = "3.11"
+
+# Headers de seguridad opcionales
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options        = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy        = "strict-origin-when-cross-origin"

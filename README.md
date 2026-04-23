@@ -1,150 +1,150 @@
-# Miguel Ángel Roca — Archivo Digital
+<div align="center">
 
-Dashboard interactivo de análisis y visualización del patrimonio arquitectónico de **Miguel Ángel Roca**, en el marco del proyecto **FraMMET** (TNE23-00074), financiado por el MUR a través del PNRR.
+# 🏛️ Miguel Ángel Roca — Archivo Digital
 
-> Julián Andrés Prego · Prof. Fernando Fraternali · 2026
+### Dashboard interactivo del patrimonio arquitectónico
+
+[![FraMMET](https://img.shields.io/badge/FraMMET-TNE23--00074-F4821A?style=flat-square)]()
+[![PNRR](https://img.shields.io/badge/MUR-PNRR-2060c8?style=flat-square)]()
+[![Netlify Status](https://img.shields.io/badge/Netlify-Deploying-00C7B7?style=flat-square&logo=netlify&logoColor=white)]()
+[![License](https://img.shields.io/badge/license-academic-F4C820?style=flat-square)]()
+
+*Università degli Studi di Salerno · 2026*
+
+</div>
 
 ---
 
-## Estructura del proyecto
+## 📖 Sobre el proyecto
+
+Archivo gráfico digital y museo virtual del arquitecto argentino **Miguel Ángel Roca** (1936–2025), desarrollado en el marco del proyecto **FraMMET** — *Fragility, Marginality, Mobility, Energy Transition* — financiado por el Ministerio de Universidad e Investigación italiano a través del PNRR, con sede en el Dipartimento di Ingegneria Civile de la Universidad de Salerno.
+
+El sitio permite explorar **121 proyectos** del arquitecto a través de análisis dashboard, mapas georreferenciados y fichas detalladas de cada obra.
+
+## ✨ Características
+
+- 📊 **9 gráficos interactivos** con filtrado cruzado multi-dimensional (Tipología · País · Estado · Década · Estrategia Urbana · Tipo)
+- 🗺️ **Mapas Leaflet** con 4 capas intercambiables (Estándar · Oscuro · Claro · Satélite)
+- 📍 **121 proyectos georreferenciados** — ejecutados en naranja, no ejecutados en azul
+- 🎨 **Paleta viva** inspirada en los dibujos arquitectónicos de Roca
+- 🔗 **5 links por proyecto** — Más Info · Link 360° · Entrevista · Modelo 3D · Legajo Técnico
+- 📱 **Responsive** para desktop, tablet y mobile
+
+## 🛠️ Stack tecnológico
+
+| | |
+|---|---|
+| 🗺️ **Leaflet** | `1.9.4` — mapas interactivos |
+| 🧩 **Leaflet.markercluster** | `1.5.3` — agrupación de marcadores |
+| 📈 **Chart.js** | `4.4.0` — gráficos del dashboard |
+| 🌊 **chartjs-chart-sankey** | `0.12.1` — diagrama de flujo |
+| 🐍 **Python + pandas** | scripts de procesamiento de datos |
+| ⚡ **Netlify + GitHub** | hosting + CI/CD |
+
+**Sin frameworks JS · Sin npm · Sin build tools complicados · HTML + CSS + JS vanilla**
+
+## 📂 Estructura del repositorio
 
 ```
 roca-archivo-digital/
 │
-├── index.html                  ← Punto de entrada (no tocar para actualizar datos)
+├── 📄 index.html                       ← Punto de entrada
+├── 📄 README.md
+├── 📄 netlify.toml                     ← Configuración de Netlify
+├── 📄 .gitignore
 │
-├── css/
-│   └── styles.css              ← Estilos — tema oscuro + paleta viva
+├── 📁 .github/workflows/
+│   └── 🔄 update_data.yml              ← Actualización automática desde Drive
 │
-├── js/
-│   ├── data.js                 ← Dataset generado ★ ESTE ES EL QUE CAMBIA
-│   └── app.js                  ← Lógica completa (gráficos, mapas, filtros)
+├── 📁 css/
+│   └── 🎨 styles.css                   ← Tema oscuro · paleta Roca
 │
-├── data/
-│   ├── Roca_DB.xlsx            ← Fuente de verdad ★ editar acá los datos
-│   ├── img_Roca_DB.xlsx        ← URLs de imágenes por Proyecto_Id
-│   └── projects.json           ← Export JSON (generado junto con data.js)
+├── 📁 js/
+│   ├── 📊 data.js                      ← Dataset (generado automáticamente)
+│   └── ⚙️  app.js                      ← Lógica completa (gráficos, mapas, filtros)
 │
-├── scripts/
-│   └── export_data.py          ← Script que regenera data.js desde el Excel
+├── 📁 data/
+│   ├── 📗 Roca_DB.xlsx                 ← Base de datos principal
+│   ├── 🖼️  img_Roca_DB.xlsx            ← URLs de imágenes
+│   └── 📋 projects.json                ← Export JSON (generado)
 │
-└── assets/                     ← Recursos estáticos (favicon, imágenes locales)
+├── 📁 scripts/
+│   ├── 🐍 export_data.py               ← Excel → data.js
+│   └── 🐍 download_and_build.py        ← Build script para Netlify
+│
+└── 📁 assets/                          ← Recursos estáticos
 ```
 
----
+## 🚀 Deploy
 
-## ¿Cómo actualizar los datos?
+El sitio está publicado en **Netlify** conectado directamente a este repositorio.
 
-El flujo es simple: **editar el Excel → correr el script → hacer push**.
+**Flujo de actualización automática:**
 
+```
+📗 Drive (Excel)  ──→  🔄 GitHub Actions  ──→  📦 data.js commit  ──→  🌐 Netlify deploy
+      ↑                       ↑
+   editar acá         manual o cada 6h
+```
+
+Cada vez que se actualiza el Excel en Google Drive:
+1. El workflow de GitHub descarga el archivo y regenera `js/data.js`
+2. El commit se pushea automáticamente
+3. Netlify detecta el push y redespliega el sitio en ~1 minuto
+
+## 🔧 Actualización de datos
+
+### ⚡ Actualización inmediata (manual)
+```
+GitHub → Actions → "Actualizar datos desde Google Drive" → Run workflow
+```
+El sitio queda actualizado en 2 minutos.
+
+### 🔁 Actualización automática
+El workflow corre automáticamente cada 6 horas. Para cambiar la frecuencia, editar `.github/workflows/update_data.yml`:
+```yaml
+- cron: '0 */6 * * *'   # cada 6 horas (actual)
+- cron: '0 8 * * *'     # una vez al día a las 8 AM UTC
+- cron: '0 */2 * * *'   # cada 2 horas
+```
+
+### 💻 Desarrollo local
 ```bash
-# 1. Editar datos en el Excel (modificar filas, completar campos vacíos, etc.)
-#    data/Roca_DB.xlsx  ←  datos principales
-#    data/img_Roca_DB.xlsx  ←  URLs de imágenes (columna picture_url)
-
-# 2. Regenerar data.js y projects.json automáticamente
+# Editar data/Roca_DB.xlsx localmente
 python scripts/export_data.py
-
-# 3. Commit y push — el dashboard en producción se actualiza solo
-git add js/data.js data/projects.json
-git commit -m "datos: descripción del cambio"
-git push
-```
-
-> No es necesario tocar `index.html`, `app.js` ni `styles.css`.
-
-### Campos editables en Roca_DB.xlsx
-
-| Columna | Descripción |
-|---------|-------------|
-| `Proyecto_Id` | ID único — no modificar |
-| `Proyecto` | Nombre del proyecto |
-| `Año de Proyecto` | Año de inicio/diseño |
-| `Año de Realización` | Año de construcción (vacío si no ejecutado) |
-| `Se realizo el Proyecto` | `SI` o `NO` |
-| `Ciudad` / `Provincia` / `Pais` | Ubicación |
-| `Estrategia Urbana` | Ciudad Universitaria / Córdoba 91 / etc. |
-| `Tipo` | Institución / Viviendas / Oficinas y Corporativos / Espacios Urbanos / Comerciales |
-| `Destino` | Tipología específica (Banco, UNC, Espacio Público, etc.) |
-| `Descripción` | Texto descriptivo completo |
-| `Latitud` / `Longitud` | Coordenadas WGS84 |
-| `Entrevistas` | URL YouTube u otro |
-| `Legajo Técnico` | URL del legajo (puede quedar vacío) |
-| `Link Modelo 3D` | URL del modelo 3D |
-| `Link 360` | URL del tour 360° |
-| `Link Pagina` | URL en miguelangelroca.com.ar |
-
----
-
-## Cómo usar localmente
-
-```bash
-# Con Python — desde la raíz del proyecto
 python3 -m http.server 8080
 # Abrir http://localhost:8080
 ```
 
-> Abrir `index.html` directo con `file://` puede bloquear recursos en algunos navegadores.
+## 🎨 Personalización
 
-## Publicar en Netlify (recomendado — URL sin usuario)
+| ¿Qué quiero cambiar? | ¿Dónde? |
+|---|---|
+| 🎨 Colores del tema | `css/styles.css` → `:root {}` |
+| 🌈 Paleta de gráficos | `js/app.js` → `const PAL` |
+| 🔤 Tipografías | `index.html` → Google Fonts import |
+| 📊 Agregar un gráfico | `js/app.js` → nueva función `buildXChart()` |
 
-1. Crear cuenta en [netlify.com](https://netlify.com)
-2. Conectar el repositorio de GitHub
-3. En **Site settings → Change site name** elegir la URL deseada
-4. Cada `git push` actualiza automáticamente el sitio publicado
+## 🎓 Contexto académico
 
-## Publicar en GitHub Pages
+<table>
+<tr>
+<td>
 
-```bash
-# En GitHub: Settings → Pages → Branch: main / root
-# URL resultante: https://org.github.io/roca-archivo-digital/
-```
+**Proyecto:** TNE23-00074 — FraMMET  
+**CUP:** C96G23000270001  
+**Financiamiento:** MUR / PNRR · NextGenerationEU  
+**Institución:** Dipartimento di Ingegneria Civile  
+**Universidad:** Università degli Studi di Salerno
 
----
-
-## Funcionalidades — v7
-
-### Dashboard analítico
-
-| Gráfico | Descripción | Filtrable |
-|---------|-------------|-----------|
-| Top 10 Tipologías | Barras horizontales por cantidad | ✓ |
-| Por País | Donut con porcentajes | ✓ |
-| Realizados vs No ejecutados | Barras comparativas | ✓ |
-| Por Década | Línea proyectados vs realizados | ✓ |
-| Estrategias Urbanas | Barras apiladas realizados/proyectados | ✓ |
-| Matriz de Intensidad | Heatmap décadas × top 10 tipologías | — |
-| Sankey País × Tipología | Flujos (países con >1 proyecto) | — |
-
-### Filtrado cruzado multi-dimensional
-Clic en cualquier elemento agrega ese filtro. Se combinan: Tipología + País + Estado + Década + Estrategia Urbana. Chips individuales con `✕` para quitar cada filtro.
-
-### Mapas interactivos — 4 capas
-- **Ejecutados** → marcador naranja con halo
-- **No ejecutados** → marcador azul con halo
-- Switcher de capas: Estándar · Oscuro · Claro · Satélite
-
-### Ficha del proyecto — 5 botones de links
-Más Info · Link 360° · Entrevista · Modelo 3D · Legajo Técnico
-(se activan solo si el proyecto tiene el link)
+</td>
+</tr>
+</table>
 
 ---
 
-## Tecnologías
+<div align="center">
 
-| Librería | Versión | Uso |
-|----------|---------|-----|
-| [Leaflet](https://leafletjs.com/) | 1.9.4 | Mapas |
-| [Leaflet.markercluster](https://github.com/Leaflet/Leaflet.markercluster) | 1.5.3 | Clustering |
-| [Chart.js](https://www.chartjs.org/) | 4.4.0 | Gráficos |
-| [chartjs-chart-sankey](https://github.com/kurkle/chartjs-chart-sankey) | 0.12.1 | Diagrama Sankey |
+**2026 © Julián Andrés Prego**
 
-Sin frameworks, sin build tools, sin npm. HTML + CSS + JS vanilla.
-
----
-
-## Contexto académico
-
-**TNE23-00074 — Fragility, Marginality, Mobility, Energy Transition (FraMMET)**
-CUP: C96G23000270001 · MUR / PNRR · NextGenerationEU
-Dipartimento di Ingegneria Civile, Università degli Studi di Salerno
+</div>
