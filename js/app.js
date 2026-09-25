@@ -1,7 +1,5 @@
 /* app.js — M.A.R. Archivo Digital | v7
-   Gráficos: Dest · Pais · Tang · Tipo · Ciudad · Dec · Heatmap · EU · Sankey
-   Filtros:  dest · pais · si · dec · eu · tipo (multi-dimensional)
-   Mapas:    4 capas · naranja/azul · icono seleccionado animado · 5 links
+   Tiles: Esri ArcGIS Online (libre, sin API key)
 */
 
 /* ═══════════════════════════════════════════════════════
@@ -684,26 +682,35 @@ function renderScheda(panel, proj){
    ═══════════════════════════════════════════════════════════ */
 const TILE_DEFS = {
   voyager: {
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    opts: {attribution:'© OpenStreetMap © CARTO', subdomains:'abcd', maxZoom:19},
+    // Esri World Street Map — completamente libre, sin API key
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+    opts: {attribution:'Tiles © Esri — Source: Esri, HERE, DeLorme, USGS, Intermap, increment P Corp., NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, MapmyIndia, © OpenStreetMap contributors', maxZoom:20},
     labels: null
   },
   dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    opts: {attribution:'© OpenStreetMap © CARTO', subdomains:'abcd', maxZoom:19},
-    labels: null
+    // Esri World Dark Gray Base — libre
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    opts: {attribution:'Tiles © Esri — Esri, DeLorme, HERE', maxZoom:16},
+    labels: {
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+      opts: {attribution:'', maxZoom:16}
+    }
   },
   light: {
-    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    opts: {attribution:'© OpenStreetMap © CARTO', subdomains:'abcd', maxZoom:19},
-    labels: null
+    // Esri World Light Gray Canvas — libre
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    opts: {attribution:'Tiles © Esri — Esri, DeLorme, HERE', maxZoom:16},
+    labels: {
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+      opts: {attribution:'', maxZoom:16}
+    }
   },
   satellite: {
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     opts: {attribution:'Tiles © Esri', maxZoom:19},
     labels: {
-      url:'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',
-      opts:{attribution:'', subdomains:'abcd', maxZoom:19}
+      url:'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+      opts:{attribution:'', maxZoom:20, opacity:0.8}
     }
   }
 };
