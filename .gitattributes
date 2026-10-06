@@ -1,0 +1,18 @@
+# Normalizar saltos de línea para prevenir problemas entre Windows, Mac y Linux
+* text=auto eol=lf
+
+# Declarar archivos de texto para control de versiones
+*.html text
+*.css text
+*.js text
+*.py text
+*.toml text
+*.json text
+*.md text
+
+# Tratar los archivos de Excel como binarios
+*.xlsx binary
+
+# Ajustes para el detector de lenguajes de GitHub (Linguist)
+js/data.js linguist-generated=true
+data/projects.json linguist-vendored=true
